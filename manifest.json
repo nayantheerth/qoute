@@ -1,0 +1,11 @@
+{
+  "id": "study-quote-generator",
+  "name": "Study Quote Generator",
+  "description": "Random motivational quotes for students, filterable by category (Focus, Resilience, Discipline, Growth). Save favorites and copy to clipboard.",
+  "author": "Arc Plugin Dev",
+  "version": "1.0.0",
+  "icon": "Sparkles",
+  "category": "focus",
+  "url": "plugin.html",
+  "height": 520
+}

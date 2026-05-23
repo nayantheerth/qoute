@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Study Quote Generator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d11;
+    --surface: #18181f;
+    --border: rgba(255,255,255,0.08);
+    --text: #e4e4f0;
+    --muted: #888;
+    --primary: #e1dfff;
+    --primary-dim: rgba(225,223,255,0.1);
+    --radius: 12px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; padding: 1rem; font-size: 14px; }
+  .controls { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+  .filter-btn {
+    font-size: 11px; padding: 4px 12px; border-radius: 20px;
+    border: 0.5px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; transition: all .15s;
+    font-family: inherit;
+  }
+  .filter-btn.active { background: var(--primary-dim); color: var(--primary); border-color: rgba(225,223,255,0.2); }
+  .next-btn {
+    margin-left: auto; font-size: 12px; padding: 5px 14px;
+    border-radius: 8px; border: 0.5px solid var(--border);
+    background: transparent; color: var(--text); cursor: pointer;
+    font-family: inherit; display: flex; align-items: center; gap: 5px;
+  }
+  .next-btn:hover { background: var(--surface); }
+  .card {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .tag {
+    display: inline-block; font-size: 10px; padding: 2px 10px;
+    border-radius: 20px; margin-bottom: .75rem; letter-spacing: .05em;
+    font-weight: 600; text-transform: uppercase;
+    background: var(--primary-dim); color: var(--primary);
+  }
+  .quote { font-size: 14px; line-height: 1.75; font-style: italic; color: var(--text); margin-bottom: .6rem; }
+  .author { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .actions { display: flex; gap: 6px; margin-top: .75rem; }
+  .action-btn {
+    font-size: 11px; padding: 4px 12px; border-radius: 8px;
+    border: 0.5px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .action-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+  .stats { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .stat { flex: 1; background: var(--surface); border: 0.5px solid var(--border); border-radius: 8px; padding: .6rem .75rem; text-align: center; }
+  .stat-val { font-size: 20px; font-weight: 500; color: var(--text); }
+  .stat-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; letter-spacing: .04em; }
+  .fav-section-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5rem; }
+  .fav-list { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
+  .fav-item {
+    font-size: 12px; color: var(--muted); font-style: italic;
+    padding: 7px 10px; background: var(--surface);
+    border: 0.5px solid var(--border); border-radius: 8px; line-height: 1.5;
+  }
+  .empty { font-size: 12px; color: var(--muted); text-align: center; padding: .75rem; }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button class="filter-btn active" data-cat="all">All</button>
+  <button class="filter-btn" data-cat="focus">Focus</button>
+  <button class="filter-btn" data-cat="resilience">Resilience</button>
+  <button class="filter-btn" data-cat="discipline">Discipline</button>
+  <button class="filter-btn" data-cat="growth">Growth</button>
+  <button class="next-btn" id="next-btn">&#8635; New</button>
+</div>
+
+<div class="card">
+  <div class="tag" id="cat-tag"></div>
+  <div class="quote" id="quote-text"></div>
+  <div class="author" id="quote-author"></div>
+  <div class="actions">
+    <button class="action-btn" id="fav-btn">&#9825; Save</button>
+    <button class="action-btn" id="copy-btn">&#10064; Copy</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-val" id="seen-count">0</div><div class="stat-lbl">seen today</div></div>
+  <div class="stat"><div class="stat-val" id="fav-count">0</div><div class="stat-lbl">saved</div></div>
+</div>
+
+<div class="fav-section-title">Saved quotes</div>
+<div class="fav-list" id="fav-list"></div>
+
+<script>
+const QUOTES = [
+  { text: "The secret of getting ahead is getting started.", author: "Mark Twain", cat: "focus" },
+  { text: "It always seems impossible until it's done.", author: "Nelson Mandela", cat: "resilience" },
+  { text: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.", author: "Aristotle", cat: "discipline" },
+  { text: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin", cat: "growth" },
+  { text: "The more that you read, the more things you will know.", author: "Dr. Seuss", cat: "growth" },
+  { text: "Focus on being productive instead of busy.", author: "Tim Ferriss", cat: "focus" },
+  { text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier", cat: "discipline" },
+  { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar", cat: "resilience" },
+  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs", cat: "focus" },
+  { text: "Difficulties in life are intended to make us better, not bitter.", author: "Dan Reeves", cat: "resilience" },
+  { text: "Study hard what interests you the most in the most undisciplined, irreverent and original manner possible.", author: "Richard Feynman", cat: "discipline" },
+  { text: "A little progress each day adds up to big results.", author: "Satya Nani", cat: "growth" },
+  { text: "Concentrate all your thoughts upon the work at hand.", author: "Alexander Graham Bell", cat: "focus" },
+  { text: "Fall seven times, stand up eight.", author: "Japanese Proverb", cat: "resilience" },
+  { text: "Self-discipline begins with the mastery of your thoughts.", author: "Napoleon Hill", cat: "discipline" },
+  { text: "The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice.", author: "Brian Herbert", cat: "growth" },
+  { text: "Education is not the filling of a pail, but the lighting of a fire.", author: "W.B. Yeats", cat: "growth" },
+  { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt", cat: "resilience" },
+  { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson", cat: "discipline" },
+  { text: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King", cat: "growth" },
+];
+
+let cat = "all", idx = 0, seen = 0, favs = [], shown = new Set();
+
+const filtered = () => cat === "all" ? QUOTES : QUOTES.filter(q => q.cat === cat);
+
+function showQuote(q) {
+  document.getElementById("quote-text").textContent = "\u201C" + q.text + "\u201D";
+  document.getElementById("quote-author").textContent = "\u2014 " + q.author;
+  document.getElementById("cat-tag").textContent = q.cat.charAt(0).toUpperCase() + q.cat.slice(1);
+  seen++;
+  document.getElementById("seen-count").textContent = seen;
+}
+
+function nextQuote() {
+  const pool = filtered();
+  let unseen = pool.filter(q => !shown.has(q.text));
+  if (!unseen.length) { shown.clear(); unseen = pool; }
+  const q = unseen[Math.floor(Math.random() * unseen.length)];
+  idx = pool.indexOf(q);
+  shown.add(q.text);
+  showQuote(q);
+}
+
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    cat = btn.dataset.cat;
+    shown.clear();
+    nextQuote();
+  });
+});
+
+document.getElementById("next-btn").addEventListener("click", nextQuote);
+
+document.getElementById("fav-btn").addEventListener("click", () => {
+  const q = filtered()[idx];
+  if (!q || favs.find(f => f.text === q.text)) return;
+  favs.push(q);
+  document.getElementById("fav-count").textContent = favs.length;
+  renderFavs();
+});
+
+document.getElementById("copy-btn").addEventListener("click", () => {
+  const q = filtered()[idx];
+  if (!q) return;
+  navigator.clipboard.writeText("\u201C" + q.text + "\u201D \u2014 " + q.author).catch(() => {});
+  const btn = document.getElementById("copy-btn");
+  btn.textContent = "✓ Copied";
+  setTimeout(() => { btn.textContent = "⧠ Copy"; }, 1500);
+});
+
+function renderFavs() {
+  const list = document.getElementById("fav-list");
+  list.innerHTML = favs.length
+    ? favs.map(f => `<div class="fav-item">\u201C${f.text}\u201D &mdash; ${f.author}</div>`).join("")
+    : '<div class="empty">No saved quotes yet</div>';
+}
+
+nextQuote();
+renderFavs();
+</script>
+</body>
+</html>
